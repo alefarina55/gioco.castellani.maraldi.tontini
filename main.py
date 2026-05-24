@@ -48,6 +48,7 @@ while running:
 
     # Update player
     player.update(keys, platforms)
+    enemy.update(player)
 
     if player.attacking and enemy.alive:
 
@@ -66,7 +67,11 @@ while running:
     player.draw(screen)
 
     enemy.draw(screen)
-    
+
+    #Game over
+    if player.health <= 0:
+        running = False
+
     # Aggiorna schermo
     pygame.display.update()
 

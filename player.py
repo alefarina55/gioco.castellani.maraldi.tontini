@@ -29,6 +29,12 @@ class Player:
         self.dash_timer = 0
         self.dash_cooldown = 0
 
+        # Vita
+        self.health = 5
+
+        # Invulnerabilità temporanea
+        self.damage_cooldown = 0
+
     def move(self, keys):
 
         # Durante il dash blocca movimento normale
@@ -120,7 +126,19 @@ class Player:
                     self.vel_y = 0
                     self.on_ground = True
 
+    def take_damage(self):
+
+        if self.damage_cooldown == 0:
+
+            self.health -= 1
+
+            self.damage_cooldown = 60
+
     def update(self, keys, platforms):
+
+        # Cooldown danno
+        if self.damage_cooldown > 0:
+            self.damage_cooldown -= 1
 
         self.move(keys)
 
