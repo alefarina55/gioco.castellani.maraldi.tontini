@@ -2,12 +2,13 @@ import pygame
 
 class Projectile:
 
-    def __init__(self, x, y, direction, color=(80, 180, 255), speed=10):
+    def __init__(self, x, y, direction, color, speed):
 
-        self.rect = pygame.Rect(x, y, 20, 10)
+        self.rect = pygame.Rect(x, y, 20, 12)
 
         self.direction = direction
         self.speed = speed
+
         self.color = color
 
         self.alive = True
@@ -16,12 +17,12 @@ class Projectile:
 
         self.rect.x += self.speed * self.direction
 
-        if self.rect.x < -100 or self.rect.x > 5000:
+        if self.rect.x < -200 or self.rect.x > 6000:
             self.alive = False
 
     def draw(self, screen, camera_x):
 
-        pygame.draw.rect(
+        pygame.draw.ellipse(
             screen,
             self.color,
             (
@@ -30,4 +31,14 @@ class Projectile:
                 self.rect.width,
                 self.rect.height
             )
+        )
+
+        pygame.draw.circle(
+            screen,
+            (255, 255, 255),
+            (
+                self.rect.x - camera_x + 5,
+                self.rect.y + 5
+            ),
+            2
         )

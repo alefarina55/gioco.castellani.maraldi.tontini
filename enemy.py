@@ -11,7 +11,9 @@ class Enemy:
 
         self.speed = 2
 
-    def move_towards_player(self, player):
+        self.damage_cooldown = 0
+
+    def update(self, player):
 
         if not self.alive:
             return
@@ -22,6 +24,22 @@ class Enemy:
         if player.rect.x < self.rect.x:
             self.rect.x -= self.speed
 
+        if self.damage_cooldown > 0:
+            self.damage_cooldown -= 1
+
+    def attack_player(self, player):
+
+        if not self.alive:
+            return
+
+        if self.rect.colliderect(player.rect):
+
+            if self.damage_cooldown == 0:
+
+                player.take_damage()
+
+                self.damage_cooldown = 60
+
     def take_damage(self):
 
         self.health -= 1
@@ -29,19 +47,41 @@ class Enemy:
         if self.health <= 0:
             self.alive = False
 
-    def attack_player(self, player):
+    def draw(self, screen, camera_x):
 
-        if self.alive and self.rect.colliderect(player.rect):
+        if not self.alive:
+            return
 
-            player.take_damage()
+        pygame.draw.rect(
+            screen,
+            (200, 60, 60),
+            (
+                self.rect.x - camera_x,
+                self.rect.y,
+                self.rect.width,
+                self.rect.height
+            ),
+            border_radius=10
+        )
 
-    def update(self, player):
+        # eyes
 
-        self.move_towards_player(player)
+        pygame.draw.circle(
+            screen,
+            (0, 0, 0),
+            (
+                self.rect.x - camera_x + 15,
+                self.rect.y + 20
+            ),
+            4
+        )
 
-        self.attack_player(player)
-
-    def draw(self, screen):
-
-        if self.alive:
-            pygame.draw.rect(screen, (200, 60, 60), self.rect)
+        pygame.draw.circle(
+            screen,
+            (0, 0, 0),
+            (
+                self.rect.x - camera_x + 35,
+                self.rect.y + 20
+            ),
+            4
+        )

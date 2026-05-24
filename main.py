@@ -8,16 +8,18 @@ from save_system import save_game, load_game
 
 pygame.init()
 
-WIDTH, HEIGHT = 1000, 600
+WIDTH = 1280
+HEIGHT = 720
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("2D Action Game")
+pygame.display.set_caption("Grape Monster")
 
 clock = pygame.time.Clock()
 
-font = pygame.font.SysFont(None, 40)
+font_big = pygame.font.SysFont("arial", 80)
+font = pygame.font.SysFont("arial", 36)
 
-BACKGROUND = (25, 25, 35)
+BACKGROUND = (22, 18, 30)
 
 camera_x = 0
 
@@ -26,28 +28,33 @@ spawn_x, spawn_y = load_game()
 player = Player(spawn_x, spawn_y)
 
 enemies = [
-    Enemy(600, 480),
-    Enemy(1000, 480),
-    Enemy(1400, 480),
+    Enemy(700, 520),
+    Enemy(1200, 520),
+    Enemy(1700, 520),
 ]
 
-boss = Boss(1700, 430)
-final_boss = Boss(3000, 430)
+boss = Boss(2400, 430)
+final_boss = Boss(4200, 350)
 
 boss_active = False
 final_boss_active = False
 
 platforms = [
-    pygame.Rect(0, 550, 4000, 50),
-    pygame.Rect(300, 450, 200, 20),
-    pygame.Rect(700, 350, 200, 20),
-    pygame.Rect(1100, 420, 250, 20),
-    pygame.Rect(1600, 300, 200, 20),
-    pygame.Rect(2200, 450, 200, 20),
-    pygame.Rect(2600, 350, 200, 20),
+    pygame.Rect(0, 650, 5500, 70),
+
+    pygame.Rect(400, 520, 200, 20),
+    pygame.Rect(850, 430, 200, 20),
+    pygame.Rect(1400, 360, 200, 20),
+
+    pygame.Rect(2200, 520, 300, 20),
+
+    pygame.Rect(3200, 500, 300, 20),
+    pygame.Rect(3800, 420, 250, 20),
 ]
 
-checkpoint = pygame.Rect(2100, 470, 50, 80)
+checkpoint = pygame.Rect(3000, 570, 60, 80)
+
+state = "menu"
 
 running = True
 
@@ -58,207 +65,195 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-    keys = pygame.key.get_pressed()
+        if event.type == pygame.KEYDOWN:
 
-    player.update(keys, platforms)
+            if state == "menu":
+                if event.key == pygame.K_RETURN:
+                    state = "game"
 
-    camera_x = player.rect.x - WIDTH // 2
+            elif state == "win":
+                if event.key == pygame.K_ESCAPE:
+                    running = False
 
-    for e in enemies:
-        e.update(player)
+    # ================= MENU =================
 
-    # PLAYER ATTACKS ENEMIES
+    if state == "menu":
 
-    for e in enemies:
+        screen.fill((18, 10, 28))
 
-        if player.attacking and e.alive:
-            if player.attack_rect.colliderect(e.rect):
-                e.take_damage()
+        title = font_big.render("GRAPE MONSTER", True, (180, 80, 255))
+        text = font.render("Premi INVIO per iniziare", True, (255, 255, 255))
 
-        for projectile in player.projectiles:
-            if e.alive and projectile.rect.colliderect(e.rect):
-                e.take_damage()
-                projectile.alive = False
+        screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 220))
+        screen.blit(text, (WIDTH // 2 - text.get_width() // 2, 420))
 
-    # MID BOSS ACTIVATION
+        pygame.display.update()
+        clock.tick(60)
+        continue
 
-    if not boss_active:
+    # ================= GAME =================
 
-        all_dead = True
+    if state == "game":
+
+        keys = pygame.key.get_pressed()
+
+        player.update(keys, platforms)
+
+        camera_x = player.rect.x - WIDTH // 2
+
+        # ENEMIES
 
         for e in enemies:
-            if e.alive:
-                all_dead = False
+            e.update(player)
 
-        if all_dead:
-            boss_active = True
+        # PLAYER DAMAGE ENEMIES
 
-    # MID BOSS
+        for e in enemies:
 
-    if boss_active and boss.alive:
+            if player.attacking and e.alive:
+                if player.attack_rect.colliderect(e.rect):
+                    e.take_damage()
 
-        boss.update(player)
+            for projectile in player.projectiles:
+                if e.alive and projectile.rect.colliderect(e.rect):
+                    e.take_damage()
+                    projectile.alive = False
 
-        if player.attacking:
-            if player.attack_rect.colliderect(boss.rect):
-                boss.take_damage()
+        # ACTIVATE MID BOSS
 
-        for projectile in player.projectiles:
-            if projectile.rect.colliderect(boss.rect):
-                boss.take_damage()
-                projectile.alive = False
+        if not boss_active:
 
-    # FINAL BOSS ACTIVATION
+            all_dead = True
 
-    if boss_active and not boss.alive:
-        final_boss_active = True
+            for e in enemies:
+                if e.alive:
+                    all_dead = False
 
-    # FINAL BOSS
+            if all_dead:
+                boss_active = True
 
-    if final_boss_active and final_boss.alive:
+        # MID BOSS
 
-        final_boss.update(player)
+        if boss_active and boss.alive:
 
-        if player.attacking:
-            if player.attack_rect.colliderect(final_boss.rect):
-                final_boss.take_damage()
+            boss.update(player)
 
-        for projectile in player.projectiles:
-            if projectile.rect.colliderect(final_boss.rect):
-                final_boss.take_damage()
-                projectile.alive = False
+            if player.attacking:
+                if player.attack_rect.colliderect(boss.rect):
+                    boss.take_damage()
 
-    # ENEMY DAMAGE
+            for projectile in player.projectiles:
+                if projectile.rect.colliderect(boss.rect):
+                    boss.take_damage()
+                    projectile.alive = False
 
-    for e in enemies:
-        e.attack_player(player)
+        # FINAL BOSS
 
-    # CHECKPOINT
+        if boss_active and not boss.alive:
+            final_boss_active = True
 
-    if player.rect.colliderect(checkpoint):
-        save_game(player.rect.x, player.rect.y)
+        if final_boss_active and final_boss.alive:
 
-    # GAME OVER
+            final_boss.update(player)
 
-    if player.health <= 0:
-        running = False
+            if player.attacking:
+                if player.attack_rect.colliderect(final_boss.rect):
+                    final_boss.take_damage()
 
-    # WIN
+            for projectile in player.projectiles:
+                if projectile.rect.colliderect(final_boss.rect):
+                    final_boss.take_damage()
+                    projectile.alive = False
 
-    if final_boss_active and not final_boss.alive:
-        print("YOU WIN")
-        running = False
+        # ENEMY DAMAGE PLAYER
 
-    # DRAW
+        for e in enemies:
+            e.attack_player(player)
 
-    screen.fill(BACKGROUND)
+        # SAVE
 
-    for p in platforms:
+        if player.rect.colliderect(checkpoint):
+            save_game(player.rect.x, player.rect.y)
 
-        pygame.draw.rect(
-            screen,
-            (80, 80, 80),
-            (p.x - camera_x, p.y, p.width, p.height)
-        )
+        # GAME OVER
 
-    pygame.draw.rect(
-        screen,
-        (80, 255, 80),
-        (checkpoint.x - camera_x, checkpoint.y, 50, 80)
-    )
+        if player.health <= 0:
+            running = False
 
-    # PLAYER
+        # WIN
 
-    pygame.draw.rect(
-        screen,
-        (220, 220, 220),
-        (
-            player.rect.x - camera_x,
-            player.rect.y,
-            player.rect.width,
-            player.rect.height
-        )
-    )
+        if final_boss_active and not final_boss.alive:
+            state = "win"
 
-    # SWORD ATTACK
+        # DRAW
 
-    if player.attacking:
+        screen.fill(BACKGROUND)
 
-        pygame.draw.rect(
-            screen,
-            (255, 80, 80),
-            (
-                player.attack_rect.x - camera_x,
-                player.attack_rect.y,
-                player.attack_rect.width,
-                player.attack_rect.height
-            )
-        )
+        # Background decorations
 
-    # PLAYER PROJECTILES
+        for i in range(12):
+            pygame.draw.circle(screen, (35, 28, 48), (i * 200 - camera_x // 4, 100), 120)
 
-    for projectile in player.projectiles:
-        projectile.draw(screen, camera_x)
+        # Platforms
 
-    # ENEMIES
-
-    for e in enemies:
-
-        if e.alive:
-
+        for p in platforms:
             pygame.draw.rect(
                 screen,
-                (200, 60, 60),
-                (
-                    e.rect.x - camera_x,
-                    e.rect.y,
-                    e.rect.width,
-                    e.rect.height
-                )
+                (70, 70, 85),
+                (p.x - camera_x, p.y, p.width, p.height),
+                border_radius=8
             )
 
-    # MID BOSS
-
-    if boss_active and boss.alive:
+        # Checkpoint
 
         pygame.draw.rect(
             screen,
-            (120, 0, 180),
-            (
-                boss.rect.x - camera_x,
-                boss.rect.y,
-                boss.rect.width,
-                boss.rect.height
-            )
+            (80, 255, 120),
+            (checkpoint.x - camera_x, checkpoint.y, 60, 80),
+            border_radius=10
         )
 
-        for projectile in boss.projectiles:
-            projectile.draw(screen, camera_x)
+        # Player
 
-    # FINAL BOSS
+        player.draw(screen, camera_x)
 
-    if final_boss_active and final_boss.alive:
+        # Enemies
 
-        pygame.draw.rect(
-            screen,
-            (180, 0, 0),
-            (
-                final_boss.rect.x - camera_x,
-                final_boss.rect.y,
-                final_boss.rect.width,
-                final_boss.rect.height
-            )
-        )
+        for e in enemies:
+            e.draw(screen, camera_x)
 
-        for projectile in final_boss.projectiles:
-            projectile.draw(screen, camera_x)
+        # Mid boss
 
-    # HUD
+        if boss_active and boss.alive:
+            boss.draw(screen, camera_x)
 
-    hp = font.render(f"HP: {player.health}", True, (255, 255, 255))
-    screen.blit(hp, (20, 20))
+        # Final boss
 
-    pygame.display.update()
+        if final_boss_active and final_boss.alive:
+            final_boss.draw(screen, camera_x)
+
+        # HUD
+
+        hp = font.render(f"HP: {player.health}", True, (255, 255, 255))
+        screen.blit(hp, (20, 20))
+
+        pygame.display.update()
+
+    # ================= WIN SCREEN =================
+
+    if state == "win":
+
+        screen.fill((10, 20, 10))
+
+        title = font_big.render("GRAPE MONSTER", True, (180, 80, 255))
+        text1 = font.render("Hai sconfitto l'uva malvagia!", True, (255, 255, 255))
+        text2 = font.render("Premi ESC per uscire", True, (255, 255, 255))
+
+        screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 180))
+        screen.blit(text1, (WIDTH // 2 - text1.get_width() // 2, 350))
+        screen.blit(text2, (WIDTH // 2 - text2.get_width() // 2, 450))
+
+        pygame.display.update()
 
     clock.tick(60)
 
