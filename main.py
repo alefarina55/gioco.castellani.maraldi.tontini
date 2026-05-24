@@ -2,6 +2,7 @@ import pygame
 import sys
 
 from player import Player
+from enemy import Enemy
 
 # Inizializza pygame
 pygame.init()
@@ -22,6 +23,8 @@ BACKGROUND_COLOR = (25, 25, 35)
 
 # Player
 player = Player(100, 300)
+
+enemy = Enemy(600, 480)
 
 # Piattaforme
 platforms = [
@@ -46,6 +49,12 @@ while running:
     # Update player
     player.update(keys, platforms)
 
+    if player.attacking and enemy.alive:
+
+        if player.attack_rect.colliderect(enemy.rect):
+
+            enemy.take_damage()
+
     # Disegna sfondo
     screen.fill(BACKGROUND_COLOR)
 
@@ -56,6 +65,8 @@ while running:
     # Disegna player
     player.draw(screen)
 
+    enemy.draw(screen)
+    
     # Aggiorna schermo
     pygame.display.update()
 
