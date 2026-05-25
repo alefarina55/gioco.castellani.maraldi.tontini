@@ -56,25 +56,20 @@ final_boss_active = False
 
 platforms = [
 
-    # ground
     pygame.Rect(0, 650, 7000, 70),
 
-    # early platforms
     pygame.Rect(400, 520, 200, 20),
     pygame.Rect(850, 430, 200, 20),
     pygame.Rect(1400, 360, 200, 20),
 
-    # first boss area
     pygame.Rect(2200, 520, 300, 20),
 
-    # final staircase
     pygame.Rect(3600, 580, 180, 20),
     pygame.Rect(3900, 520, 180, 20),
     pygame.Rect(4200, 460, 180, 20),
     pygame.Rect(4500, 400, 180, 20),
     pygame.Rect(4800, 340, 180, 20),
 
-    # final arena
     pygame.Rect(5050, 420, 700, 20),
 ]
 
@@ -115,6 +110,7 @@ while running:
             elif state == "intro_story":
 
                 if event.key == pygame.K_RETURN:
+
                     story_phase += 1
 
                     if story_phase > 2:
@@ -125,6 +121,7 @@ while running:
             elif state == "mid_story":
 
                 if event.key == pygame.K_RETURN:
+
                     story_phase += 1
 
                     if story_phase > 4:
@@ -229,103 +226,148 @@ while running:
 
         camera_x = player.rect.x - WIDTH // 2
 
-        # ================= ENEMIES =================
+        # =====================================================
+        # ONLY UPDATE ENEMIES IF CLOSE TO SCREEN
+        # =====================================================
 
         for e in enemies:
-            e.update(player)
 
-        # player damage enemies
+            if abs(e.rect.x - player.rect.x) < WIDTH:
+
+                e.update(player)
+
+        # =====================================================
+        # PLAYER DAMAGE ENEMIES
+        # =====================================================
 
         for e in enemies:
 
             if player.attacking and e.alive:
+
                 if player.attack_rect.colliderect(e.rect):
                     e.take_damage()
 
             for projectile in player.projectiles:
+
                 if e.alive and projectile.rect.colliderect(e.rect):
+
                     e.take_damage()
                     projectile.alive = False
 
-        # ================= MID BOSS ACTIVATION =================
+        # =====================================================
+        # MID BOSS ACTIVATION
+        # =====================================================
 
         if not boss_active:
 
             all_dead = True
 
             for e in enemies:
+
                 if e.alive:
                     all_dead = False
 
             if all_dead:
                 boss_active = True
 
-        # ================= MID BOSS =================
+        # =====================================================
+        # MID BOSS UPDATE ONLY IF VISIBLE
+        # =====================================================
 
-        if boss_active and boss.alive:
+        boss_visible = abs(boss.rect.x - player.rect.x) < WIDTH
+
+        if boss_active and boss.alive and boss_visible:
 
             boss.update(player)
 
             if player.attacking:
+
                 if player.attack_rect.colliderect(boss.rect):
                     boss.take_damage()
 
             for projectile in player.projectiles:
+
                 if projectile.rect.colliderect(boss.rect):
+
                     boss.take_damage()
                     projectile.alive = False
 
-        # ================= MID STORY =================
+        # =====================================================
+        # MID STORY
+        # =====================================================
 
         if boss_active and not boss.alive and state == "game":
 
             state = "mid_story"
             story_phase = 3
 
-        # ================= FINAL BOSS =================
+        # =====================================================
+        # FINAL BOSS ACTIVATION
+        # =====================================================
 
         if state == "final_path":
-
             final_boss_active = True
 
-        if final_boss_active and final_boss.alive:
+        # =====================================================
+        # FINAL BOSS UPDATE ONLY IF VISIBLE
+        # =====================================================
+
+        final_boss_visible = abs(final_boss.rect.x - player.rect.x) < WIDTH
+
+        if final_boss_active and final_boss.alive and final_boss_visible:
 
             final_boss.update(player)
 
             if player.attacking:
+
                 if player.attack_rect.colliderect(final_boss.rect):
                     final_boss.take_damage()
 
             for projectile in player.projectiles:
+
                 if projectile.rect.colliderect(final_boss.rect):
+
                     final_boss.take_damage()
                     projectile.alive = False
 
-        # ================= ENEMY DAMAGE =================
+        # =====================================================
+        # ENEMY DAMAGE PLAYER
+        # =====================================================
 
         for e in enemies:
-            e.attack_player(player)
 
-        # ================= SAVE =================
+            if abs(e.rect.x - player.rect.x) < WIDTH:
+
+                e.attack_player(player)
+
+        # =====================================================
+        # SAVE
+        # =====================================================
 
         if player.rect.colliderect(checkpoint):
             save_game(player.rect.x, player.rect.y)
 
-        # ================= GAME OVER =================
+        # =====================================================
+        # GAME OVER
+        # =====================================================
 
         if player.health <= 0:
             running = False
 
-        # ================= WIN =================
+        # =====================================================
+        # WIN
+        # =====================================================
 
         if final_boss_active and not final_boss.alive:
             state = "win"
 
-        # ================= DRAW =================
+        # =====================================================
+        # DRAW
+        # =====================================================
 
         screen.fill(BACKGROUND)
 
-        # background circles
+        # background
 
         for i in range(15):
 
@@ -363,19 +405,21 @@ while running:
         # enemies
 
         for e in enemies:
-            e.draw(screen, camera_x)
 
-        # boss
+            if abs(e.rect.x - player.rect.x) < WIDTH:
+                e.draw(screen, camera_x)
 
-        if boss_active and boss.alive:
+        # mid boss
+
+        if boss_active and boss.alive and boss_visible:
             boss.draw(screen, camera_x)
 
         # final boss
 
-        if final_boss_active and final_boss.alive:
+        if final_boss_active and final_boss.alive and final_boss_visible:
             final_boss.draw(screen, camera_x)
 
-        # hud
+        # HUD
 
         hp = font.render(f"HP: {player.health}", True, (255, 255, 255))
         screen.blit(hp, (20, 20))
